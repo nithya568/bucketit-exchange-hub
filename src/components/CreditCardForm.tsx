@@ -49,9 +49,9 @@ export function CreditCardForm() {
   };
 
   return (
-    <div className="space-y-4 mt-4 border rounded-lg p-6 bg-white">
+    <div className="space-y-4 mt-4 glass-card rounded-xl p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-lg font-medium">Card Details</h3>
+        <h3 className="text-lg font-medium gradient-text">Card Details</h3>
         <div className="flex space-x-2">
           <svg className="h-8 w-auto" viewBox="0 0 48 48" fill="none">
             <path d="M44 11H4V36H44V11Z" fill="#E9EAEB" />
@@ -68,7 +68,7 @@ export function CreditCardForm() {
       
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="card-number">Card Number</Label>
+          <Label htmlFor="card-number" className="text-foreground/90">Card Number</Label>
           <div className="relative">
             <Input 
               id="card-number"
@@ -76,36 +76,38 @@ export function CreditCardForm() {
               value={cardNumber}
               onChange={handleCardNumberChange}
               maxLength={19}
-              className="pl-10"
+              className="pl-10 bg-white/70 backdrop-blur-sm border-accent/30 focus:border-primary/50"
             />
-            <CreditCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <CreditCard className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/70" />
           </div>
         </div>
         
         <div className="grid gap-2">
-          <Label htmlFor="card-name">Cardholder Name</Label>
+          <Label htmlFor="card-name" className="text-foreground/90">Cardholder Name</Label>
           <Input 
             id="card-name" 
             placeholder="John Smith"
             value={cardName}
             onChange={(e) => setCardName(e.target.value)}
+            className="bg-white/70 backdrop-blur-sm border-accent/30 focus:border-primary/50"
           />
         </div>
         
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="expiry">Expiry Date</Label>
+            <Label htmlFor="expiry" className="text-foreground/90">Expiry Date</Label>
             <Input 
               id="expiry" 
               placeholder="MM/YY"
               value={expiry}
               onChange={handleExpiryChange}
               maxLength={5}
+              className="bg-white/70 backdrop-blur-sm border-accent/30 focus:border-primary/50"
             />
           </div>
           
           <div className="grid gap-2">
-            <Label htmlFor="cvv">CVV</Label>
+            <Label htmlFor="cvv" className="text-foreground/90">CVV</Label>
             <div className="relative">
               <Input 
                 id="cvv" 
@@ -113,9 +115,9 @@ export function CreditCardForm() {
                 value={cvv}
                 onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
                 maxLength={3}
-                className="pl-10"
+                className="pl-10 bg-white/70 backdrop-blur-sm border-accent/30 focus:border-primary/50"
               />
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary/70" />
             </div>
           </div>
         </div>
