@@ -1,239 +1,236 @@
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Eye, EyeOff } from "lucide-react";
 
-type FormType = "login" | "register";
+// Define form schemas
+const loginSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  rememberMe: z.boolean().optional(),
+});
 
-interface AuthFormProps {
-  type: FormType;
-}
+const registerSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string(),
+  terms: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
 
-export function AuthForm({ type }: AuthFormProps) {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    remember: false,
-    agreeToTerms: false,
-  });
-  
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+type AuthFormProps = {
+  type: "login" | "register";
+};
+
+export const AuthForm = ({ type }: AuthFormProps) => {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Create form
+  const form = useForm({
+    resolver: zodResolver(type === "login" ? loginSchema : registerSchema),
+    defaultValues: type === "login"
+      ? { email: "", password: "", rememberMe: false }
+      : { name: "", email: "", password: "", confirmPassword: "", terms: false },
+  });
 
-  const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData((prev) => ({ ...prev, [name]: checked }));
-  };
+  // Form submission handler
+  const onSubmit = (values: any) => {
+    setIsLoading(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    if (type === "register" && formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      setIsSubmitting(false);
-      return;
-    }
-    
-    if (type === "register" && !formData.agreeToTerms) {
-      toast.error("Please agree to the terms and conditions");
-      setIsSubmitting(false);
-      return;
-    }
-    
     // Simulate API call
     setTimeout(() => {
-      // In a real app, this would be a call to your authentication API
+      setIsLoading(false);
+
       if (type === "login") {
+        // In a real app, we would validate credentials with an API
         localStorage.setItem("isLoggedIn", "true");
-        toast.success("Login successful");
+        toast.success("Successfully logged in");
         navigate("/");
       } else {
-        toast.success("Registration successful! Please log in.");
-        navigate("/login");
+        // In a real app, we would register the user with an API
+        localStorage.setItem("isLoggedIn", "true");
+        toast.success("Account created successfully");
+        navigate("/");
       }
-      setIsSubmitting(false);
     }, 1500);
   };
 
   return (
-    <div className="max-w-md w-full mx-auto p-6 bg-white rounded-xl shadow-sm border">
-      <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold">
-          {type === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          {type === "login" 
-            ? "Enter your credentials to access your account" 
-            : "Fill in the details below to get started"}
-        </p>
-      </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {type === "register" && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First name</Label>
-              <Input
-                id="firstName"
-                name="firstName"
-                placeholder="John"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last name</Label>
-              <Input
-                id="lastName"
-                name="lastName"
-                placeholder="Doe"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-        )}
-        
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
+    <div className="bg-white p-6 md:p-8 rounded-lg border shadow-sm">
+      <h2 className="text-2xl font-bold mb-6">
+        {type === "login" ? "Sign In" : "Create an Account"}
+      </h2>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {type === "register" && (
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Full Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
             name="email"
-            type="email"
-            placeholder="john.doe@example.com"
-            value={formData.email}
-            onChange={handleChange}
-            required
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="example@email.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={handleChange}
-              required
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="••••••••" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {type === "register" && (
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 top-0 h-full"
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </Button>
-          </div>
-        </div>
-        
-        {type === "register" && (
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
+          )}
+
+          {type === "login" ? (
+            <div className="flex items-center justify-between">
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Remember me
+                    </FormLabel>
+                  </FormItem>
+                )}
               />
+              <Button variant="link" className="p-0 h-auto text-sm font-normal">
+                Forgot password?
+              </Button>
             </div>
-          </div>
-        )}
-        
-        {type === "login" && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="remember" 
-                checked={formData.remember}
-                onCheckedChange={(checked) => 
-                  handleCheckboxChange("remember", Boolean(checked))
-                } 
-              />
-              <Label htmlFor="remember" className="text-sm cursor-pointer">Remember me</Label>
-            </div>
-            
-            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-              Forgot password?
-            </Link>
-          </div>
-        )}
-        
-        {type === "register" && (
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="agreeToTerms" 
-              checked={formData.agreeToTerms}
-              onCheckedChange={(checked) => 
-                handleCheckboxChange("agreeToTerms", Boolean(checked))
-              } 
-              required
+          ) : (
+            <FormField
+              control={form.control}
+              name="terms"
+              render={({ field }) => (
+                <FormItem className="flex items-start space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      I agree to the{" "}
+                      <a href="#" className="text-primary hover:underline">
+                        Terms of Service
+                      </a>{" "}
+                      and{" "}
+                      <a href="#" className="text-primary hover:underline">
+                        Privacy Policy
+                      </a>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
+                </FormItem>
+              )}
             />
-            <Label htmlFor="agreeToTerms" className="text-sm cursor-pointer">
-              I agree to the{" "}
-              <Link to="/terms-of-service" className="text-primary hover:underline">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link to="/privacy-policy" className="text-primary hover:underline">
-                Privacy Policy
-              </Link>
-            </Label>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full rounded-full"
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                {type === "login" ? "Signing in..." : "Creating account..."}
+              </>
+            ) : (
+              <>{type === "login" ? "Sign In" : "Create Account"}</>
+            )}
+          </Button>
+
+          <div className="text-center text-sm">
+            {type === "login" ? (
+              <p>
+                Don't have an account?{" "}
+                <a href="/register" className="text-primary hover:underline font-medium">
+                  Create one
+                </a>
+              </p>
+            ) : (
+              <p>
+                Already have an account?{" "}
+                <a href="/login" className="text-primary hover:underline font-medium">
+                  Sign In
+                </a>
+              </p>
+            )}
           </div>
-        )}
-        
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting 
-            ? (type === "login" ? "Signing in..." : "Creating account...") 
-            : (type === "login" ? "Sign In" : "Create Account")
-          }
-        </Button>
-      </form>
-      
-      <div className="mt-6 text-center text-sm">
-        {type === "login" ? (
-          <p>
-            Don't have an account?{" "}
-            <Link to="/register" className="text-primary font-medium hover:underline">
-              Sign up
-            </Link>
-          </p>
-        ) : (
-          <p>
-            Already have an account?{" "}
-            <Link to="/login" className="text-primary font-medium hover:underline">
-              Sign in
-            </Link>
-          </p>
-        )}
-      </div>
+        </form>
+      </Form>
     </div>
   );
-}
+};
