@@ -63,14 +63,65 @@ export const AuthForm = ({ type }: AuthFormProps) => {
 
       if (type === "login") {
         // In a real app, we would validate credentials with an API
-        localStorage.setItem("isLoggedIn", "true");
-        toast.success("Successfully logged in");
-        navigate("/");
+        // For now, check if the user exists in localStorage
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+        const user = users.find((u: any) => u.email === values.email);
+        
+        if (user && user.password === values.password) {
+          localStorage.setItem("currentUser", JSON.stringify({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone || "+1 (555) 123-4567",
+            address: user.address || "123 Main St, Apt 4B, New York, NY 10001",
+            profileImage: ""
+          }));
+          localStorage.setItem("isLoggedIn", "true");
+          toast.success("Successfully logged in");
+          navigate("/profile");
+        } else {
+          toast.error("Invalid email or password");
+          return;
+        }
       } else {
-        // In a real app, we would register the user with an API
+        // Registration
+        // Get existing users or initialize empty array
+        const users = JSON.parse(localStorage.getItem("users") || "[]");
+        
+        // Check if email already exists
+        if (users.some((user: any) => user.email === values.email)) {
+          toast.error("Email already in use");
+          return;
+        }
+        
+        // Create new user object
+        const newUser = {
+          id: Date.now(),
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          phone: "+1 (555) 123-4567", // Default values
+          address: "123 Main St, Apt 4B, New York, NY 10001",
+          profileImage: ""
+        };
+        
+        // Add to users array and save
+        users.push(newUser);
+        localStorage.setItem("users", JSON.stringify(users));
+        
+        // Set current user and logged in state
+        localStorage.setItem("currentUser", JSON.stringify({
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          address: newUser.address,
+          profileImage: ""
+        }));
         localStorage.setItem("isLoggedIn", "true");
+        
         toast.success("Account created successfully");
-        navigate("/");
+        navigate("/profile");
       }
     }, 1500);
   };

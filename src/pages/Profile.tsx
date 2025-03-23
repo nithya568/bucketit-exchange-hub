@@ -11,6 +11,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { User, Package, CreditCard, Heart, LogOut, Mail, Phone, MapPin } from "lucide-react";
 
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  profileImage: string;
+}
+
 interface RentalItem {
   id: number;
   name: string;
@@ -54,15 +63,16 @@ const mockRentals: RentalItem[] = [
 const Profile = () => {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [userData, setUserData] = useState({
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "+1 (555) 123-4567",
-    address: "123 Main St, Apt 4B, New York, NY 10001",
+  const [userData, setUserData] = useState<UserData>({
+    id: 0,
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
     profileImage: ""
   });
 
-  // Check if user is logged in
+  // Check if user is logged in and get user data
   useEffect(() => {
     const checkLoginStatus = () => {
       const loggedIn = localStorage.getItem("isLoggedIn") === "true";
@@ -71,6 +81,23 @@ const Profile = () => {
       if (!loggedIn) {
         // Redirect to login if not logged in
         navigate("/login");
+        return;
+      }
+      
+      // Get current user data from localStorage
+      const currentUserData = localStorage.getItem("currentUser");
+      if (currentUserData) {
+        try {
+          const parsedUserData = JSON.parse(currentUserData);
+          setUserData(parsedUserData);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          // Handle corrupted data by logging out
+          handleLogout();
+        }
+      } else {
+        // No user data found, redirect to login
+        handleLogout();
       }
     };
     
@@ -80,11 +107,13 @@ const Profile = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("currentUser");
     toast.success("Successfully logged out");
     navigate("/login");
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
       .split(" ")
       .map((n) => n[0])
