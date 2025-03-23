@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -72,9 +71,6 @@ export const AuthForm = ({ type }: AuthFormProps) => {
             id: user.id,
             name: user.name,
             email: user.email,
-            phone: user.phone || "+1 (555) 123-4567",
-            address: user.address || "123 Main St, Apt 4B, New York, NY 10001",
-            profileImage: ""
           }));
           localStorage.setItem("isLoggedIn", "true");
           toast.success("Successfully logged in");
@@ -94,29 +90,23 @@ export const AuthForm = ({ type }: AuthFormProps) => {
           return;
         }
         
-        // Create new user object
+        // Create new user object - only store what we collect
         const newUser = {
           id: Date.now(),
           name: values.name,
           email: values.email,
-          password: values.password,
-          phone: "+1 (555) 123-4567", // Default values
-          address: "123 Main St, Apt 4B, New York, NY 10001",
-          profileImage: ""
+          password: values.password
         };
         
         // Add to users array and save
         users.push(newUser);
         localStorage.setItem("users", JSON.stringify(users));
         
-        // Set current user and logged in state
+        // Set current user and logged in state - only include collected info
         localStorage.setItem("currentUser", JSON.stringify({
           id: newUser.id,
           name: newUser.name,
-          email: newUser.email,
-          phone: newUser.phone,
-          address: newUser.address,
-          profileImage: ""
+          email: newUser.email
         }));
         localStorage.setItem("isLoggedIn", "true");
         

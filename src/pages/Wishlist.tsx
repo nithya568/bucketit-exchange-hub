@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -17,49 +16,8 @@ interface WishlistItem {
   available: boolean;
 }
 
-// Sample wishlist data
-const initialWishlistItems: WishlistItem[] = [
-  {
-    id: 2,
-    name: "Minimalist Desk",
-    image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?q=80&w=2536&auto=format&fit=crop",
-    price: 29.99,
-    rentalPeriod: "weekly",
-    available: true
-  },
-  {
-    id: 4,
-    name: "Premium Bookshelf",
-    image: "https://images.unsplash.com/photo-1588279102906-b93c06fdc441?q=80&w=2070&auto=format&fit=crop",
-    price: 24.99,
-    rentalPeriod: "weekly",
-    available: true
-  },
-  {
-    id: 5,
-    name: "4K Smart TV - 55\"",
-    image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?q=80&w=2057&auto=format&fit=crop",
-    price: 79.99,
-    rentalPeriod: "weekly",
-    available: false
-  },
-  {
-    id: 7,
-    name: "Ergonomic Office Chair",
-    image: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?q=80&w=2073&auto=format&fit=crop",
-    price: 34.99,
-    rentalPeriod: "weekly",
-    available: true
-  },
-  {
-    id: 8,
-    name: "Wireless Noise-Cancelling Headphones",
-    image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?q=80&w=2065&auto=format&fit=crop",
-    price: 29.99,
-    rentalPeriod: "weekly",
-    available: true
-  }
-];
+// Initialize with empty wishlist
+const initialWishlistItems: WishlistItem[] = [];
 
 const Wishlist = () => {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(initialWishlistItems);

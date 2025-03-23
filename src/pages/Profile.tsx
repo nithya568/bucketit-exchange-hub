@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -9,15 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { User, Package, CreditCard, Heart, LogOut, Mail, Phone, MapPin } from "lucide-react";
+import { User, Package, CreditCard, Heart, LogOut, Mail } from "lucide-react";
 
 interface UserData {
   id: number;
   name: string;
   email: string;
-  phone: string;
-  address: string;
-  profileImage: string;
 }
 
 interface RentalItem {
@@ -66,10 +62,7 @@ const Profile = () => {
   const [userData, setUserData] = useState<UserData>({
     id: 0,
     name: "",
-    email: "",
-    phone: "",
-    address: "",
-    profileImage: ""
+    email: ""
   });
 
   // Check if user is logged in and get user data
@@ -149,7 +142,6 @@ const Profile = () => {
               <div className="bg-white p-6 rounded-lg border shadow-sm">
                 <div className="flex items-center space-x-4 mb-6">
                   <Avatar className="h-14 w-14">
-                    <AvatarImage src={userData.profileImage} alt={userData.name} />
                     <AvatarFallback className="bg-primary text-white text-lg">
                       {getInitials(userData.name)}
                     </AvatarFallback>
@@ -219,22 +211,6 @@ const Profile = () => {
                           <p className="text-sm text-muted-foreground">Email Address</p>
                         </div>
                       </div>
-                      
-                      <div className="flex items-start space-x-4">
-                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="font-medium">{userData.phone}</p>
-                          <p className="text-sm text-muted-foreground">Phone Number</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-start space-x-4">
-                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="font-medium">{userData.address}</p>
-                          <p className="text-sm text-muted-foreground">Shipping Address</p>
-                        </div>
-                      </div>
                     </CardContent>
                   </Card>
                   
@@ -245,7 +221,7 @@ const Profile = () => {
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="rentals" className="space-y-6">
+                <TabsContent value="rentals">
                   <h2 className="text-xl font-medium mb-4">Current & Past Rentals</h2>
                   
                   {mockRentals.length > 0 ? (

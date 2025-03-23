@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -39,12 +38,8 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // For demo purposes, we'll simulate fetching cart/wishlist counts
+  // For demo purposes, we'll check login status
   useEffect(() => {
-    // In a real app, this would fetch from an API or context
-    setCartCount(3);
-    setWishlistCount(5);
-    
     // Check if user is logged in - would use auth context in a real app
     const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     setIsLoggedIn(userLoggedIn);
