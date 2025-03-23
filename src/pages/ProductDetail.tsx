@@ -306,11 +306,51 @@ const ProductDetail = () => {
   const handleAddToCart = () => {
     if (!product) return;
     
+    // Get current cart items
+    const cartItemsJSON = localStorage.getItem("cartItems");
+    const cartItems = cartItemsJSON ? JSON.parse(cartItemsJSON) : [];
+    
+    // Check if product already exists in cart
+    const existingItemIndex = cartItems.findIndex((item: any) => item.id === product.id);
+    
+    if (existingItemIndex !== -1) {
+      // Update existing item
+      cartItems[existingItemIndex].quantity += quantity;
+      cartItems[existingItemIndex].rentalPeriod = selectedRentalPeriod;
+      cartItems[existingItemIndex].price = getPeriodPrice(product.price, selectedRentalPeriod);
+    } else {
+      // Add new item
+      cartItems.push({
+        id: product.id,
+        name: product.name,
+        image: product.image,
+        price: getPeriodPrice(product.price, selectedRentalPeriod),
+        rentalPeriod: selectedRentalPeriod,
+        quantity: quantity
+      });
+    }
+    
+    // Save to localStorage
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    
+    // Notify components of cart update
+    window.dispatchEvent(new Event("cartUpdated"));
+    
     toast.success(`${product.name} added to cart (${quantity} ${quantity === 1 ? 'item' : 'items'})`);
   };
 
   const handleAddToWishlist = () => {
     if (!product) return;
+    
+    // Get current wishlist count
+    const currentCount = localStorage.getItem("wishlistCount");
+    const newCount = currentCount ? parseInt(currentCount) + 1 : 1;
+    
+    // Update wishlist count
+    localStorage.setItem("wishlistCount", newCount.toString());
+    
+    // Notify components of wishlist update
+    window.dispatchEvent(new Event("wishlistUpdated"));
     
     toast.success(`${product.name} added to wishlist`);
   };

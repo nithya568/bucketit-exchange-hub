@@ -6,7 +6,6 @@ import { CartItem } from "@/components/CartItem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaymentOptions } from "@/components/PaymentOptions";
 import { CreditCardForm } from "@/components/CreditCardForm";
 import { toast } from "sonner";
@@ -21,35 +20,8 @@ interface CartProduct {
   quantity: number;
 }
 
-const initialCartItems: CartProduct[] = [
-  {
-    id: 1,
-    name: "Modern Lounge Chair",
-    image: "https://images.unsplash.com/photo-1567538096621-38d2284b23ff?q=80&w=2272&auto=format&fit=crop",
-    price: 39.99,
-    rentalPeriod: "weekly",
-    quantity: 1
-  },
-  {
-    id: 3,
-    name: "MacBook Pro 16\"",
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=2626&auto=format&fit=crop",
-    price: 149.99,
-    rentalPeriod: "weekly",
-    quantity: 1
-  },
-  {
-    id: 6,
-    name: "Bestseller Book Collection",
-    image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=2098&auto=format&fit=crop",
-    price: 9.99,
-    rentalPeriod: "weekly",
-    quantity: 2
-  }
-];
-
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartProduct[]>(initialCartItems);
+  const [cartItems, setCartItems] = useState<CartProduct[]>([]);
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
@@ -58,10 +30,20 @@ const Cart = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const storedCartItems = localStorage.getItem("cartItems");
+    if (storedCartItems) {
+      setCartItems(JSON.parse(storedCartItems));
+    }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    window.dispatchEvent(new Event("cartUpdated"));
+  }, [cartItems]);
 
   const handleRemoveItem = (id: number) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
+    toast.success("Item removed from cart");
   };
 
   const handleUpdateQuantity = (id: number, quantity: number) => {
@@ -91,7 +73,20 @@ const Cart = () => {
   };
 
   const handleMoveToWishlist = (id: number) => {
+    const itemToMove = cartItems.find(item => item.id === id);
+    
     setCartItems(cartItems.filter((item) => item.id !== id));
+    
+    if (itemToMove) {
+      const currentCount = localStorage.getItem("wishlistCount");
+      const newCount = currentCount ? parseInt(currentCount) + 1 : 1;
+      
+      localStorage.setItem("wishlistCount", newCount.toString());
+      
+      window.dispatchEvent(new Event("wishlistUpdated"));
+      
+      toast.success(`${itemToMove.name} moved to wishlist`);
+    }
   };
 
   const handleApplyPromo = () => {
@@ -132,6 +127,11 @@ const Cart = () => {
     toast.success("Order placed successfully!");
     setCartItems([]);
     setCheckoutStep("cart");
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    toast.success("Cart cleared");
   };
 
   const renderCheckoutContent = () => {
@@ -274,10 +274,7 @@ const Cart = () => {
               
               <Button
                 variant="destructive"
-                onClick={() => {
-                  setCartItems([]);
-                  toast.success("Cart cleared");
-                }}
+                onClick={clearCart}
                 className="rounded-full"
               >
                 Clear Cart

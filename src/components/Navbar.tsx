@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -45,21 +46,35 @@ export function Navbar() {
     setIsLoggedIn(userLoggedIn);
     
     // Load cart and wishlist counts from localStorage if they exist
-    const storedCartCount = localStorage.getItem("cartCount");
+    const storedCartItems = localStorage.getItem("cartItems");
     const storedWishlistCount = localStorage.getItem("wishlistCount");
     
-    setCartCount(storedCartCount ? parseInt(storedCartCount) : 0);
+    const cartItems = storedCartItems ? JSON.parse(storedCartItems) : [];
+    setCartCount(cartItems.length);
     setWishlistCount(storedWishlistCount ? parseInt(storedWishlistCount) : 0);
   }, []);
 
-  // Update localStorage when cartCount or wishlistCount changes
+  // Listen for cart and wishlist update events
   useEffect(() => {
-    localStorage.setItem("cartCount", cartCount.toString());
-  }, [cartCount]);
+    const handleCartUpdate = () => {
+      const storedCartItems = localStorage.getItem("cartItems");
+      const cartItems = storedCartItems ? JSON.parse(storedCartItems) : [];
+      setCartCount(cartItems.length);
+    };
 
-  useEffect(() => {
-    localStorage.setItem("wishlistCount", wishlistCount.toString());
-  }, [wishlistCount]);
+    const handleWishlistUpdate = () => {
+      const storedWishlistCount = localStorage.getItem("wishlistCount");
+      setWishlistCount(storedWishlistCount ? parseInt(storedWishlistCount) : 0);
+    };
+
+    window.addEventListener("cartUpdated", handleCartUpdate);
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdate);
+      window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+    };
+  }, []);
 
   const navItems = [
     { name: "Home", path: "/", icon: Home },
