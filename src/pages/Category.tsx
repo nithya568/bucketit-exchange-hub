@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -30,7 +29,6 @@ interface Product {
   description?: string;
 }
 
-// Expanded products data grouped by category
 const productsByCategory: Record<string, Product[]> = {
   furniture: [
     {
@@ -335,38 +333,31 @@ const Category = () => {
   const [filterFeatured, setFilterFeatured] = useState(false);
   const [sortOption, setSortOption] = useState("recommended");
 
-  // Scroll to top on page load or category change
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    // Set products based on the category
     if (category && category in productsByCategory) {
       setProducts(productsByCategory[category]);
       setTitle(categoryTitles[category] || `${category.charAt(0).toUpperCase() + category.slice(1)} Rentals`);
       setDescription(categoryDescriptions[category] || "");
     } else {
-      // Handle invalid category
       setProducts([]);
       setTitle("Category Not Found");
       setDescription("The requested category does not exist.");
     }
   }, [category]);
 
-  // Apply filters and sorting
   useEffect(() => {
     let result = [...products];
     
-    // Apply availability filter
     if (filterAvailable) {
       result = result.filter(product => product.available);
     }
     
-    // Apply featured filter
     if (filterFeatured) {
       result = result.filter(product => product.featured);
     }
     
-    // Apply sorting
     switch (sortOption) {
       case "price-low":
         result.sort((a, b) => a.price - b.price);
@@ -379,7 +370,6 @@ const Category = () => {
         break;
       case "recommended":
       default:
-        // Mix of featured first, then by rating
         result.sort((a, b) => {
           if (a.featured && !b.featured) return -1;
           if (!a.featured && b.featured) return 1;
@@ -388,20 +378,47 @@ const Category = () => {
     }
     
     setFilteredProducts(result);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   }, [products, filterAvailable, filterFeatured, sortOption]);
 
-  const handleAddToCart = (productId: number) => {
-    // In a real app, this would add to cart through context/API
+  const handleAddToCart = (product: Product) => {
+    const storedCart = localStorage.getItem("cartItems");
+    let cartItems = storedCart ? JSON.parse(storedCart) : [];
+    
+    cartItems.push(product);
+    
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    
+    const newCartCount = cartItems.length;
+    localStorage.setItem("cartCount", newCartCount.toString());
+    
+    window.dispatchEvent(new Event('storage'));
+    
     toast.success("Item added to cart");
   };
 
-  const handleAddToWishlist = (productId: number) => {
-    // In a real app, this would add to wishlist through context/API
-    toast.success("Item added to wishlist");
+  const handleAddToWishlist = (product: Product) => {
+    const storedWishlist = localStorage.getItem("wishlistItems");
+    let wishlistItems = storedWishlist ? JSON.parse(storedWishlist) : [];
+    
+    const isAlreadyInWishlist = wishlistItems.some((item: Product) => item.id === product.id);
+    
+    if (!isAlreadyInWishlist) {
+      wishlistItems.push(product);
+      
+      localStorage.setItem("wishlistItems", JSON.stringify(wishlistItems));
+      
+      const newWishlistCount = wishlistItems.length;
+      localStorage.setItem("wishlistCount", newWishlistCount.toString());
+      
+      window.dispatchEvent(new Event('storage'));
+      
+      toast.success("Item added to wishlist");
+    } else {
+      toast.info("Item is already in your wishlist");
+    }
   };
 
-  // Pagination logic
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -410,29 +427,23 @@ const Category = () => {
   const renderPagination = () => {
     const pageNumbers = [];
     
-    // Always show first page
     pageNumbers.push(1);
     
-    // Calculate range around current page
     let startPage = Math.max(2, currentPage - 1);
     let endPage = Math.min(totalPages - 1, currentPage + 1);
     
-    // Add ellipsis after page 1 if needed
     if (startPage > 2) {
       pageNumbers.push("ellipsis1");
     }
     
-    // Add pages around current page
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(i);
     }
     
-    // Add ellipsis before last page if needed
     if (endPage < totalPages - 1) {
       pageNumbers.push("ellipsis2");
     }
     
-    // Add last page if it exists
     if (totalPages > 1) {
       pageNumbers.push(totalPages);
     }
@@ -478,7 +489,6 @@ const Category = () => {
     );
   };
 
-  // Render star ratings
   const renderRating = (rating: number = 0) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -527,7 +537,6 @@ const Category = () => {
             </div>
           </div>
           
-          {/* Filter and Sort Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mb-8 p-4 bg-card rounded-lg shadow-sm border border-border/40">
             <div className="flex-1 flex flex-col sm:flex-row gap-4">
               <div className="flex items-center gap-2">
@@ -606,7 +615,7 @@ const Category = () => {
                         variant="ghost"
                         size="icon"
                         className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                        onClick={() => handleAddToWishlist(product.id)}
+                        onClick={() => handleAddToWishlist(product)}
                         aria-label="Add to wishlist"
                       >
                         <Heart className="h-4 w-4" />
@@ -653,7 +662,7 @@ const Category = () => {
                             size="icon"
                             className="h-8 w-8 rounded-full"
                             disabled={!product.available}
-                            onClick={() => handleAddToCart(product.id)}
+                            onClick={() => handleAddToCart(product)}
                             aria-label="Add to cart"
                           >
                             <ShoppingCart className="h-4 w-4" />
@@ -665,7 +674,6 @@ const Category = () => {
                 ))}
               </div>
               
-              {/* Pagination */}
               {totalPages > 1 && (
                 <Pagination className="my-8">
                   {renderPagination()}

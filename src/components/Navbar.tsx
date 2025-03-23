@@ -43,7 +43,23 @@ export function Navbar() {
     // Check if user is logged in - would use auth context in a real app
     const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
     setIsLoggedIn(userLoggedIn);
+    
+    // Load cart and wishlist counts from localStorage if they exist
+    const storedCartCount = localStorage.getItem("cartCount");
+    const storedWishlistCount = localStorage.getItem("wishlistCount");
+    
+    setCartCount(storedCartCount ? parseInt(storedCartCount) : 0);
+    setWishlistCount(storedWishlistCount ? parseInt(storedWishlistCount) : 0);
   }, []);
+
+  // Update localStorage when cartCount or wishlistCount changes
+  useEffect(() => {
+    localStorage.setItem("cartCount", cartCount.toString());
+  }, [cartCount]);
+
+  useEffect(() => {
+    localStorage.setItem("wishlistCount", wishlistCount.toString());
+  }, [wishlistCount]);
 
   const navItems = [
     { name: "Home", path: "/", icon: Home },

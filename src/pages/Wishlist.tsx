@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -16,16 +17,30 @@ interface WishlistItem {
   available: boolean;
 }
 
-// Initialize with empty wishlist
-const initialWishlistItems: WishlistItem[] = [];
-
 const Wishlist = () => {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>(initialWishlistItems);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
 
   // Scroll to top on page load
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Load wishlist items from localStorage if they exist
+    const storedWishlist = localStorage.getItem("wishlistItems");
+    if (storedWishlist) {
+      setWishlistItems(JSON.parse(storedWishlist));
+    }
   }, []);
+
+  // Update localStorage whenever wishlist changes
+  useEffect(() => {
+    localStorage.setItem("wishlistItems", JSON.stringify(wishlistItems));
+    
+    // Update the wishlist count in localStorage for Navbar
+    localStorage.setItem("wishlistCount", wishlistItems.length.toString());
+    
+    // Trigger a custom event to notify other components about the wishlist update
+    window.dispatchEvent(new Event('storage'));
+  }, [wishlistItems]);
 
   const handleRemoveItem = (id: number) => {
     setWishlistItems(wishlistItems.filter((item) => item.id !== id));
@@ -33,7 +48,23 @@ const Wishlist = () => {
   };
 
   const handleAddToCart = (item: WishlistItem) => {
-    // In a real app, this would add to cart through context/API
+    // Get existing cart items from localStorage
+    const storedCart = localStorage.getItem("cartItems");
+    let cartItems = storedCart ? JSON.parse(storedCart) : [];
+    
+    // Add the item to cart
+    cartItems.push(item);
+    
+    // Update cart in localStorage
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+    
+    // Update cart count
+    const newCartCount = cartItems.length;
+    localStorage.setItem("cartCount", newCartCount.toString());
+    
+    // Trigger storage event for Navbar to update
+    window.dispatchEvent(new Event('storage'));
+    
     toast.success(`${item.name} added to cart`);
     
     // Option to remove from wishlist after adding to cart
