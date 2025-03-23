@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -337,7 +338,21 @@ const Category = () => {
     window.scrollTo(0, 0);
     
     if (category && category in productsByCategory) {
-      setProducts(productsByCategory[category]);
+      const categoryProducts = productsByCategory[category];
+      setProducts(categoryProducts);
+      
+      // Store product data in localStorage for search functionality
+      localStorage.setItem(`${category}Products`, JSON.stringify(
+        categoryProducts.map(product => ({
+          id: product.id,
+          name: product.name,
+          category: product.category,
+          image: product.image,
+          price: product.price,
+          description: product.description
+        }))
+      ));
+      
       setTitle(categoryTitles[category] || `${category.charAt(0).toUpperCase() + category.slice(1)} Rentals`);
       setDescription(categoryDescriptions[category] || "");
     } else {
