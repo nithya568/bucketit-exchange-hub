@@ -12,12 +12,16 @@ import {
   Home,
   Package,
   BookOpen,
-  Monitor
+  Monitor,
+  LogOut
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchDialog } from "@/components/SearchDialog";
+import { auth } from "@/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { toast } from "sonner";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -26,6 +30,7 @@ export function Navbar() {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -41,13 +46,23 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // For demo purposes, we'll check login status
+  // Monitor authentication state
   useEffect(() => {
-    // Check if user is logged in - would use auth context in a real app
-    const userLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(userLoggedIn);
-    
-    // Load cart and wishlist counts from localStorage if they exist
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsLoggedIn(true);
+        setUserName(user.displayName || "");
+      } else {
+        setIsLoggedIn(false);
+        setUserName("");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Load cart and wishlist counts
+  useEffect(() => {
     const storedCartItems = localStorage.getItem("cartItems");
     const storedWishlistCount = localStorage.getItem("wishlistCount");
     
@@ -77,6 +92,15 @@ export function Navbar() {
       window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
     };
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      toast.success("Successfully logged out");
+    } catch (error) {
+      toast.error("Error logging out");
+    }
+  };
 
   const navItems = [
     { name: "Home", path: "/", icon: Home },
@@ -156,11 +180,16 @@ export function Navbar() {
 
             {/* Auth */}
             {isLoggedIn ? (
-              <Link to="/profile">
-                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Profile">
-                  <User className="h-5 w-5" />
+              <div className="flex items-center space-x-2">
+                <Link to="/profile">
+                  <Button variant="ghost" size="icon" className="rounded-full" aria-label="Profile">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="rounded-full" onClick={handleLogout} aria-label="Logout">
+                  <LogOut className="h-5 w-5" />
                 </Button>
-              </Link>
+              </div>
             ) : (
               <Link to="/login">
                 <Button size="sm" variant="outline" className="rounded-full px-4">
@@ -207,9 +236,14 @@ export function Navbar() {
 
                     <div className="mt-auto">
                       {isLoggedIn ? (
-                        <Link to="/profile">
-                          <Button className="w-full">My Profile</Button>
-                        </Link>
+                        <div className="space-y-2">
+                          <Link to="/profile">
+                            <Button className="w-full">My Profile</Button>
+                          </Link>
+                          <Button variant="outline" className="w-full" onClick={handleLogout}>
+                            Log Out
+                          </Button>
+                        </div>
                       ) : (
                         <div className="flex flex-col space-y-2">
                           <Link to="/login">

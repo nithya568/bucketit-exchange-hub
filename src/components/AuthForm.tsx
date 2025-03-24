@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -15,6 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { auth } from "@/firebase";
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  updateProfile
+} from "firebase/auth";
 
 // Define form schemas
 const loginSchema = z.object({
@@ -53,67 +60,51 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   });
 
   // Form submission handler
-  const onSubmit = (values: any) => {
+  const onSubmit = async (values: any) => {
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-
+    
+    try {
       if (type === "login") {
-        // In a real app, we would validate credentials with an API
-        // For now, check if the user exists in localStorage
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        const user = users.find((u: any) => u.email === values.email);
-        
-        if (user && user.password === values.password) {
-          localStorage.setItem("currentUser", JSON.stringify({
-            id: user.id,
-            name: user.name,
-            email: user.email,
-          }));
-          localStorage.setItem("isLoggedIn", "true");
-          toast.success("Successfully logged in");
-          navigate("/profile");
-        } else {
-          toast.error("Invalid email or password");
-          return;
-        }
-      } else {
-        // Registration
-        // Get existing users or initialize empty array
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        
-        // Check if email already exists
-        if (users.some((user: any) => user.email === values.email)) {
-          toast.error("Email already in use");
-          return;
-        }
-        
-        // Create new user object - only store what we collect
-        const newUser = {
-          id: Date.now(),
-          name: values.name,
-          email: values.email,
-          password: values.password
-        };
-        
-        // Add to users array and save
-        users.push(newUser);
-        localStorage.setItem("users", JSON.stringify(users));
-        
-        // Set current user and logged in state - only include collected info
-        localStorage.setItem("currentUser", JSON.stringify({
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email
-        }));
-        localStorage.setItem("isLoggedIn", "true");
-        
-        toast.success("Account created successfully");
+        // Firebase login
+        await signInWithEmailAndPassword(auth, values.email, values.password);
+        toast.success("Successfully logged in");
         navigate("/profile");
+      } else {
+        // Firebase registration
+        const userCredential = await createUserWithEmailAndPassword(
+          auth, 
+          values.email, 
+          values.password
+        );
+        
+        // Update the user profile with the name
+        if (userCredential.user) {
+          await updateProfile(userCredential.user, {
+            displayName: values.name,
+          });
+          
+          toast.success("Account created successfully");
+          navigate("/profile");
+        }
       }
-    }, 1500);
+    } catch (error: any) {
+      let errorMessage = "An unexpected error occurred";
+      
+      // Handle common Firebase auth errors
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Email already in use";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak";
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = "Invalid email or password";
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
