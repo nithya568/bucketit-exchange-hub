@@ -62,6 +62,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
   // Form submission handler
   const onSubmit = async (values: any) => {
     setIsLoading(true);
+    console.log("Form submitted:", type, values);
     
     try {
       if (type === "login") {
@@ -71,6 +72,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
         navigate("/profile");
       } else {
         // Firebase registration
+        console.log("Creating user account with:", values.email, values.password);
         const userCredential = await createUserWithEmailAndPassword(
           auth, 
           values.email, 
@@ -89,6 +91,7 @@ export const AuthForm = ({ type }: AuthFormProps) => {
       }
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred";
+      console.error("Auth error:", error.code, error.message);
       
       // Handle common Firebase auth errors
       if (error.code === 'auth/email-already-in-use') {
