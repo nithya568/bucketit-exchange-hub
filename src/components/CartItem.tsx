@@ -35,12 +35,14 @@ export function CartItem({
 
   const handleRemove = () => {
     onRemove(id);
-    toast.success(`${name} removed from cart`);
   };
 
   const handleMoveToWishlist = () => {
     onMoveToWishlist(id);
-    toast.success(`${name} moved to wishlist`);
+  };
+
+  const handlePeriodChange = (value: string) => {
+    onUpdateRentalPeriod(id, value);
   };
 
   return (
@@ -70,8 +72,8 @@ export function CartItem({
             <p className="mt-1 text-xs text-muted-foreground">
               Rental Period: 
               <Select 
-                defaultValue={rentalPeriod} 
-                onValueChange={(value) => onUpdateRentalPeriod(id, value)}
+                value={rentalPeriod} 
+                onValueChange={handlePeriodChange}
               >
                 <SelectTrigger className="h-7 w-28 ml-2 text-xs">
                   <SelectValue placeholder="Select period" />
@@ -97,7 +99,7 @@ export function CartItem({
           <div className="flex items-center">
             <span className="mr-2 text-muted-foreground">Qty</span>
             <Select 
-              defaultValue={quantity.toString()} 
+              value={quantity.toString()} 
               onValueChange={(value) => onUpdateQuantity(id, parseInt(value))}
             >
               <SelectTrigger className="h-7 w-16 text-xs">

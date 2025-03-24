@@ -310,14 +310,14 @@ const ProductDetail = () => {
     const cartItemsJSON = localStorage.getItem("cartItems");
     const cartItems = cartItemsJSON ? JSON.parse(cartItemsJSON) : [];
     
-    // Check if product already exists in cart
-    const existingItemIndex = cartItems.findIndex((item: any) => item.id === product.id);
+    // Check if product already exists in cart with the same rental period
+    const existingItemIndex = cartItems.findIndex((item: any) => 
+      item.id === product.id && item.rentalPeriod === selectedRentalPeriod
+    );
     
     if (existingItemIndex !== -1) {
       // Update existing item
       cartItems[existingItemIndex].quantity += quantity;
-      cartItems[existingItemIndex].rentalPeriod = selectedRentalPeriod;
-      cartItems[existingItemIndex].price = getPeriodPrice(product.price, selectedRentalPeriod);
     } else {
       // Add new item
       cartItems.push({

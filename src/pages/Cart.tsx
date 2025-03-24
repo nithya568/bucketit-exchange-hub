@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -8,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { PaymentOptions } from "@/components/PaymentOptions";
 import { CreditCardForm } from "@/components/CreditCardForm";
+import { ShippingAddressForm, ShippingAddress } from "@/components/ShippingAddressForm";
 import { toast } from "sonner";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin } from "lucide-react";
 
 interface CartProduct {
   id: number;
@@ -25,8 +27,9 @@ const Cart = () => {
   const [promoCode, setPromoCode] = useState("");
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
-  const [checkoutStep, setCheckoutStep] = useState<"cart" | "payment" | "review">("cart");
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "shipping" | "payment" | "review">("cart");
   const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [shippingAddress, setShippingAddress] = useState<ShippingAddress | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -55,14 +58,20 @@ const Cart = () => {
   };
 
   const handleUpdateRentalPeriod = (id: number, period: string) => {
+    // Find the original base price for the product
+    const product = cartItems.find(item => item.id === id);
+    if (!product) return;
+
+    // Calculate the new price based on the period
     let newPrice = 0;
+    const basePrice = getBasePrice(id);
     
-    if (id === 1) {
-      newPrice = period === "daily" ? 8.99 : period === "weekly" ? 39.99 : 99.99;
-    } else if (id === 3) {
-      newPrice = period === "daily" ? 24.99 : period === "weekly" ? 149.99 : 449.99;
-    } else if (id === 6) {
-      newPrice = period === "daily" ? 1.99 : period === "weekly" ? 9.99 : 29.99;
+    if (period === "daily") {
+      newPrice = basePrice;
+    } else if (period === "weekly") {
+      newPrice = basePrice * 5; // Weekly is 5x daily
+    } else if (period === "monthly") {
+      newPrice = basePrice * 15; // Monthly is 15x daily
     }
     
     setCartItems(
@@ -70,6 +79,25 @@ const Cart = () => {
         item.id === id ? { ...item, rentalPeriod: period, price: newPrice } : item
       )
     );
+  };
+
+  // Helper function to get base daily price for a product
+  const getBasePrice = (id: number): number => {
+    // Base daily prices for products
+    const basePrices: Record<number, number> = {
+      1: 8.99,
+      2: 5.99,
+      3: 24.99,
+      4: 4.99,
+      5: 15.99,
+      6: 1.99,
+      7: 6.99,
+      8: 5.99,
+      9: 2.99,
+      10: 2.59
+    };
+    
+    return basePrices[id] || 9.99; // Default price if not found
   };
 
   const handleMoveToWishlist = (id: number) => {
@@ -108,19 +136,26 @@ const Cart = () => {
     }, 1000);
   };
 
-  const proceedToPayment = () => {
+  const proceedToShipping = () => {
     if (cartItems.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
+    setCheckoutStep("shipping");
+    window.scrollTo(0, 0);
+  };
+
+  const handleShippingComplete = (address: ShippingAddress) => {
+    setShippingAddress(address);
     setCheckoutStep("payment");
     window.scrollTo(0, 0);
+    toast.success("Shipping address saved");
   };
 
   const proceedToReview = () => {
     setCheckoutStep("review");
     window.scrollTo(0, 0);
-    toast.success("Order details confirmed");
+    toast.success("Payment details confirmed");
   };
 
   const completeOrder = () => {
@@ -136,6 +171,14 @@ const Cart = () => {
 
   const renderCheckoutContent = () => {
     switch (checkoutStep) {
+      case "shipping":
+        return (
+          <ShippingAddressForm 
+            onComplete={handleShippingComplete}
+            onBack={() => setCheckoutStep("cart")}
+          />
+        );
+        
       case "payment":
         return (
           <>
@@ -151,9 +194,9 @@ const Cart = () => {
               <Button 
                 variant="outline" 
                 className="rounded-full"
-                onClick={() => setCheckoutStep("cart")}
+                onClick={() => setCheckoutStep("shipping")}
               >
-                Back to Cart
+                Back to Shipping
               </Button>
               <Button 
                 className="rounded-full"
@@ -184,6 +227,19 @@ const Cart = () => {
                   ))}
                 </div>
               </div>
+              
+              {shippingAddress && (
+                <div className="bg-muted/20 p-4 rounded-lg">
+                  <h3 className="font-medium mb-2 flex items-center">
+                    <MapPin className="h-4 w-4 mr-1" /> Shipping Address
+                  </h3>
+                  <p className="text-sm">{shippingAddress.fullName}</p>
+                  <p className="text-sm">{shippingAddress.streetAddress} {shippingAddress.apartment && `, ${shippingAddress.apartment}`}</p>
+                  <p className="text-sm">{shippingAddress.city}, {shippingAddress.state} {shippingAddress.zipCode}</p>
+                  <p className="text-sm">{shippingAddress.country}</p>
+                  <p className="text-sm">{shippingAddress.phone}</p>
+                </div>
+              )}
               
               <div className="bg-muted/20 p-4 rounded-lg">
                 <h3 className="font-medium mb-2">Payment Method</h3>
@@ -314,6 +370,14 @@ const Cart = () => {
               {checkoutStep !== "cart" && (
                 <>
                   <li className="mx-2 text-muted-foreground"><ChevronRight className="h-3 w-3" /></li>
+                  <li className={checkoutStep === "shipping" ? "font-medium" : "text-muted-foreground"}>
+                    Shipping
+                  </li>
+                </>
+              )}
+              {(checkoutStep === "payment" || checkoutStep === "review") && (
+                <>
+                  <li className="mx-2 text-muted-foreground"><ChevronRight className="h-3 w-3" /></li>
                   <li className={checkoutStep === "payment" ? "font-medium" : "text-muted-foreground"}>
                     Payment
                   </li>
@@ -331,9 +395,11 @@ const Cart = () => {
           <h1 className="text-3xl font-bold mb-8">
             {checkoutStep === "cart" 
               ? "Your Cart" 
-              : checkoutStep === "payment" 
-                ? "Payment" 
-                : "Review Order"}
+              : checkoutStep === "shipping"
+                ? "Shipping Information"
+                : checkoutStep === "payment" 
+                  ? "Payment" 
+                  : "Review Order"}
           </h1>
           
           {cartItems.length > 0 || checkoutStep !== "cart" ? (
@@ -410,19 +476,19 @@ const Cart = () => {
                       <Button
                         className="w-full rounded-full mt-4"
                         size="lg"
-                        onClick={proceedToPayment}
+                        onClick={proceedToShipping}
                         disabled={cartItems.length === 0}
                       >
                         Proceed to Checkout
                       </Button>
+                    ) : checkoutStep === "shipping" ? (
+                      <div className="mt-4 text-xs text-muted-foreground text-center">
+                        <p>Please complete the shipping form</p>
+                      </div>
                     ) : checkoutStep === "payment" ? (
-                      <Button
-                        className="w-full rounded-full mt-4"
-                        size="lg"
-                        onClick={proceedToReview}
-                      >
-                        Review Order
-                      </Button>
+                      <div className="mt-4 text-xs text-muted-foreground text-center">
+                        <p>Please complete the payment details</p>
+                      </div>
                     ) : (
                       <Button
                         className="w-full rounded-full mt-4"
